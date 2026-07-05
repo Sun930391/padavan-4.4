@@ -24,20 +24,32 @@ jobs:
           sh dl_toolchain.sh
           cd ..
 
-      - name: Customize E8820V2 config (enable USB)
-        run: |
-          cd trunk/configs/templates/
-          # 追加 USB 相关配置（如果已存在则覆盖）
-          echo "CONFIG_USB_SUPPORT=y" >> E8820V2.config
-          echo "CONFIG_USB_OHCI=y" >> E8820V2.config
-          echo "CONFIG_USB_EHCI=y" >> E8820V2.config
-          echo "CONFIG_USB_XHCI=y" >> E8820V2.config
-          echo "CONFIG_USB_STORAGE=y" >> E8820V2.config
-          echo "CONFIG_FIRMWARE_INCLUDE_NTFS_3G=y" >> E8820V2.config
-          echo "CONFIG_FIRMWARE_INCLUDE_EXFAT=y" >> E8820V2.config
-          echo "CONFIG_FIRMWARE_INCLUDE_SMBD36=y" >> E8820V2.config
-          # 可按需添加其他 USB 服务
-          cd ../../..
+- name: Customize E8820V2 config (enable USB and modem)
+  run: |
+    cd trunk/configs/templates/
+    # USB 基础支持
+    echo "CONFIG_USB_SUPPORT=y" >> E8820V2.config
+    echo "CONFIG_USB_OHCI=y" >> E8820V2.config
+    echo "CONFIG_USB_EHCI=y" >> E8820V2.config
+    echo "CONFIG_USB_XHCI=y" >> E8820V2.config
+    echo "CONFIG_USB_STORAGE=y" >> E8820V2.config
+    # 文件系统
+    echo "CONFIG_FIRMWARE_INCLUDE_NTFS_3G=y" >> E8820V2.config
+    echo "CONFIG_FIRMWARE_INCLUDE_EXFAT=y" >> E8820V2.config
+    echo "CONFIG_FIRMWARE_INCLUDE_SMBD36=y" >> E8820V2.config
+    # ---------- 新增调制解调器相关 ----------
+    echo "CONFIG_USB_SERIAL=y" >> E8820V2.config
+    echo "CONFIG_USB_SERIAL_OPTION=y" >> E8820V2.config
+    echo "CONFIG_USB_SERIAL_WWAN=y" >> E8820V2.config
+    echo "CONFIG_USB_SERIAL_QCARRIER=y" >> E8820V2.config
+    echo "CONFIG_PPP=y" >> E8820V2.config
+    echo "CONFIG_PPP_ASYNC=y" >> E8820V2.config
+    echo "CONFIG_PPP_SYNC_TTY=y" >> E8820V2.config
+    echo "CONFIG_PPP_DEFLATE=y" >> E8820V2.config
+    echo "CONFIG_PPP_MPPE=y" >> E8820V2.config
+    echo "CONFIG_FIRMWARE_INCLUDE_PPPD=y" >> E8820V2.config
+    echo "CONFIG_FIRMWARE_INCLUDE_CHAT=y" >> E8820V2.config
+    cd ../../..
 
       - name: Download xray binary (mipsel) and copy to romfs
         run: |
