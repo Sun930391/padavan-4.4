@@ -1,7 +1,7 @@
 name: Build Padavan for E8820V2 with xray
 
 on:
-  workflow_dispatch:   # 允许手动触发
+  workflow_dispatch:   # 允许手动触发 
 
 jobs:
   build:
