@@ -1,7 +1,7 @@
-name: Build Padavan for E8820V2 with xray
+name: Build Padavan for E8820V2 with xray & USB Modem
 
 on:
-  workflow_dispatch:   # 允许手动触发 
+  workflow_dispatch:   # 手动触发
 
 jobs:
   build:
@@ -24,46 +24,46 @@ jobs:
           sh dl_toolchain.sh
           cd ..
 
-- name: Customize E8820V2 config (enable USB and modem)
-  run: |
-    cd trunk/configs/templates/
-    # USB 基础支持
-    echo "CONFIG_USB_SUPPORT=y" >> E8820V2.config
-    echo "CONFIG_USB_OHCI=y" >> E8820V2.config
-    echo "CONFIG_USB_EHCI=y" >> E8820V2.config
-    echo "CONFIG_USB_XHCI=y" >> E8820V2.config
-    echo "CONFIG_USB_STORAGE=y" >> E8820V2.config
-    # 文件系统
-    echo "CONFIG_FIRMWARE_INCLUDE_NTFS_3G=y" >> E8820V2.config
-    echo "CONFIG_FIRMWARE_INCLUDE_EXFAT=y" >> E8820V2.config
-    echo "CONFIG_FIRMWARE_INCLUDE_SMBD36=y" >> E8820V2.config
-    # ---------- 新增调制解调器相关 ----------
-    echo "CONFIG_USB_SERIAL=y" >> E8820V2.config
-    echo "CONFIG_USB_SERIAL_OPTION=y" >> E8820V2.config
-    echo "CONFIG_USB_SERIAL_WWAN=y" >> E8820V2.config
-    echo "CONFIG_USB_SERIAL_QCARRIER=y" >> E8820V2.config
-    echo "CONFIG_PPP=y" >> E8820V2.config
-    echo "CONFIG_PPP_ASYNC=y" >> E8820V2.config
-    echo "CONFIG_PPP_SYNC_TTY=y" >> E8820V2.config
-    echo "CONFIG_PPP_DEFLATE=y" >> E8820V2.config
-    echo "CONFIG_PPP_MPPE=y" >> E8820V2.config
-    echo "CONFIG_FIRMWARE_INCLUDE_PPPD=y" >> E8820V2.config
-    echo "CONFIG_FIRMWARE_INCLUDE_CHAT=y" >> E8820V2.config
-    cd ../../..
-
-      - name: Download xray binary (mipsel) and copy to romfs
+      - name: Customize E8820V2 config (enable USB, storage, modem & PPP)
         run: |
-          # 请替换为你的 xray 下载链接（必须为 mipsel 静态编译版）
-          XRAY_URL="https://github.com/Sun930391/padavan-4.4/raw/refs/heads/main/xray"   # ← 这里换成真实 URL
+          cd trunk/configs/templates/
+          # USB 存储基础
+          echo "CONFIG_USB_SUPPORT=y" >> E8820V2.config
+          echo "CONFIG_USB_OHCI=y" >> E8820V2.config
+          echo "CONFIG_USB_EHCI=y" >> E8820V2.config
+          echo "CONFIG_USB_XHCI=y" >> E8820V2.config
+          echo "CONFIG_USB_STORAGE=y" >> E8820V2.config
+          # 文件系统
+          echo "CONFIG_FIRMWARE_INCLUDE_NTFS_3G=y" >> E8820V2.config
+          echo "CONFIG_FIRMWARE_INCLUDE_EXFAT=y" >> E8820V2.config
+          echo "CONFIG_FIRMWARE_INCLUDE_SMBD36=y" >> E8820V2.config
+          # USB 调制解调器 & PPP
+          echo "CONFIG_USB_SERIAL=y" >> E8820V2.config
+          echo "CONFIG_USB_SERIAL_OPTION=y" >> E8820V2.config
+          echo "CONFIG_USB_SERIAL_WWAN=y" >> E8820V2.config
+          echo "CONFIG_USB_SERIAL_QCARRIER=y" >> E8820V2.config
+          echo "CONFIG_PPP=y" >> E8820V2.config
+          echo "CONFIG_PPP_ASYNC=y" >> E8820V2.config
+          echo "CONFIG_PPP_SYNC_TTY=y" >> E8820V2.config
+          echo "CONFIG_PPP_DEFLATE=y" >> E8820V2.config
+          echo "CONFIG_PPP_MPPE=y" >> E8820V2.config
+          echo "CONFIG_FIRMWARE_INCLUDE_PPPD=y" >> E8820V2.config
+          echo "CONFIG_FIRMWARE_INCLUDE_CHAT=y" >> E8820V2.config
+          cd ../../..
+
+      - name: Download xray and prepare for integration
+        run: |
+          # 请将下面的 URL 替换为你的 xray (mipsel 静态版) 实际下载地址
+          XRAY_URL="https://github.com/Sun930391/padavan-4.4/raw/refs/heads/main/xray"
           wget -O /tmp/xray ${XRAY_URL}
           chmod +x /tmp/xray
-          # 编译脚本会在打包前将文件复制进 romfs，我们提前准备一个钩子
-          # 方法：在 build_firmware_modify 脚本中插入复制命令
+
+      - name: Modify build script to include xray
+        run: |
           cd trunk
-          # 备份原始脚本
-          cp build_firmware_modify build_firmware_modify.bak
-          # 在 "make" 完成之后（搜索 "gen_trx" 前）插入 cp 命令
-          sed -i '/^[[:space:]]*make[[:space:]]/a \\tcp /tmp/xray \${ROMFSDIR}/usr/bin/\n\tchmod 755 \${ROMFSDIR}/usr/bin/xray' build_firmware_modify
+          # 在 build_firmware_modify 中，于 'make' 命令后插入复制 xray 的指令
+          # 使用单引号包裹 sed 表达式，避免转义问题
+          sed -i '/^[[:space:]]*make[[:space:]]/a \\tcp /tmp/xray $${ROMFSDIR}/usr/bin/\\n\\tchmod 755 $${ROMFSDIR}/usr/bin/xray' build_firmware_modify
           cd ..
 
       - name: Build firmware
