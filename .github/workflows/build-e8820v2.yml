@@ -1,7 +1,7 @@
 name: Build Padavan for E8820V2 with xray & USB Modem
 
 on:
-  workflow_dispatch:   # 手动触发
+  workflow_dispatch:
 
 jobs:
   build:
@@ -27,17 +27,14 @@ jobs:
       - name: Customize E8820V2 config (enable USB, storage, modem & PPP)
         run: |
           cd trunk/configs/templates/
-          # USB 存储基础
           echo "CONFIG_USB_SUPPORT=y" >> E8820V2.config
           echo "CONFIG_USB_OHCI=y" >> E8820V2.config
           echo "CONFIG_USB_EHCI=y" >> E8820V2.config
           echo "CONFIG_USB_XHCI=y" >> E8820V2.config
           echo "CONFIG_USB_STORAGE=y" >> E8820V2.config
-          # 文件系统
           echo "CONFIG_FIRMWARE_INCLUDE_NTFS_3G=y" >> E8820V2.config
           echo "CONFIG_FIRMWARE_INCLUDE_EXFAT=y" >> E8820V2.config
           echo "CONFIG_FIRMWARE_INCLUDE_SMBD36=y" >> E8820V2.config
-          # USB 调制解调器 & PPP
           echo "CONFIG_USB_SERIAL=y" >> E8820V2.config
           echo "CONFIG_USB_SERIAL_OPTION=y" >> E8820V2.config
           echo "CONFIG_USB_SERIAL_WWAN=y" >> E8820V2.config
@@ -53,16 +50,13 @@ jobs:
 
       - name: Download xray and prepare for integration
         run: |
-          # 请将下面的 URL 替换为你的 xray (mipsel 静态版) 实际下载地址
-          XRAY_URL="https://github.com/Sun930391/padavan-4.4/raw/refs/heads/main/xray"
+          XRAY_URL="https://github.com/Sun930391/padavan-4.4/raw/refs/heads/main/xray"   # 请替换为真实 URL
           wget -O /tmp/xray ${XRAY_URL}
           chmod +x /tmp/xray
 
       - name: Modify build script to include xray
         run: |
           cd trunk
-          # 在 build_firmware_modify 中，于 'make' 命令后插入复制 xray 的指令
-          # 使用单引号包裹 sed 表达式，避免转义问题
           sed -i '/^[[:space:]]*make[[:space:]]/a \\tcp /tmp/xray $${ROMFSDIR}/usr/bin/\\n\\tchmod 755 $${ROMFSDIR}/usr/bin/xray' build_firmware_modify
           cd ..
 
@@ -72,7 +66,7 @@ jobs:
           fakeroot ./build_firmware_modify E8820V2
 
       - name: Upload firmware artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4   # ← 已更新为 v4
         with:
           name: padavan-e8820v2-with-xray
           path: trunk/images/*.trx
