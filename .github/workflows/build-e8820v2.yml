@@ -42,7 +42,7 @@ jobs:
       - name: Download xray binary (mipsel) and copy to romfs
         run: |
           # 请替换为你的 xray 下载链接（必须为 mipsel 静态编译版）
-          XRAY_URL="https://example.com/your-xray-mipsel"   # ← 这里换成真实 URL
+          XRAY_URL="https://github.com/Sun930391/padavan-4.4/raw/refs/heads/main/xray"   # ← 这里换成真实 URL
           wget -O /tmp/xray ${XRAY_URL}
           chmod +x /tmp/xray
           # 编译脚本会在打包前将文件复制进 romfs，我们提前准备一个钩子
